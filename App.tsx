@@ -9,18 +9,21 @@ import { FileText, Microscope, ShieldCheck, ArrowLeft } from 'lucide-react';
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LANDING);
 
+  // Logo Component
+  const Logo = () => (
+    <div className="flex flex-col group cursor-pointer select-none" onClick={() => setView(AppView.LANDING)}>
+      <span className="text-xl font-bold tracking-widest text-blue-100 leading-tight group-hover:text-white transition-colors">
+        ESTIMATE RELIANCE
+      </span>
+      <div className="h-0.5 w-full animate-swoosh mt-1 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] group-hover:shadow-[0_0_12px_rgba(59,130,246,0.9)] transition-all duration-300"></div>
+    </div>
+  );
+
   // Landing Nav (with Login)
   const renderLandingNav = () => (
     <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-slate-950/80 border-b border-white/10 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-teal-400 flex items-center justify-center">
-            <span className="text-white font-bold text-sm tracking-tighter">ER</span>
-          </div>
-          <span className="text-lg md:text-xl font-light tracking-[0.2em] text-white whitespace-nowrap">
-            ESTIMATE RELIANCE
-          </span>
-        </div>
+        <Logo />
         <button 
           onClick={() => setView(AppView.PORTAL)}
           className="px-4 py-2 text-sm text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-all"
@@ -34,17 +37,7 @@ const App: React.FC = () => {
   // Internal Nav (with Back button)
   const renderInternalNav = () => (
     <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-slate-950/50 border-b border-white/10 px-6 py-4 flex justify-between items-center">
-      <div 
-        className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => setView(AppView.LANDING)}
-      >
-        <div className="w-8 h-8 rounded-sm bg-gradient-to-tr from-blue-600 to-teal-400 flex items-center justify-center">
-             <span className="text-white font-bold text-xs tracking-tighter">ER</span>
-        </div>
-        <span className="text-lg font-light tracking-[0.2em] text-white whitespace-nowrap">
-          ESTIMATE RELIANCE
-        </span>
-      </div>
+      <Logo />
       <button 
         onClick={() => setView(AppView.LANDING)}
         className="flex items-center px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-sm text-slate-300"
@@ -68,10 +61,13 @@ const App: React.FC = () => {
             {/* Hero Section */}
             <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-20">
               <div className="text-center max-w-5xl mx-auto animate-float">
-                <h1 className="text-6xl md:text-8xl font-thin tracking-[0.15em] mb-6 text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-100 to-teal-200 drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
-                  ESTIMATE RELIANCE
-                </h1>
-                <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/60 to-transparent mx-auto mb-8"></div>
+                <div className="flex flex-col items-center mb-10">
+                  <h1 className="text-5xl md:text-7xl font-thin tracking-widest text-white text-center drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                    ESTIMATE RELIANCE
+                  </h1>
+                  <div className="h-0.5 w-full max-w-lg animate-swoosh mt-4 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.8)] opacity-80"></div>
+                </div>
+                
                 <p className="text-xl md:text-2xl text-slate-300 font-light tracking-wide mb-12 max-w-3xl mx-auto leading-relaxed">
                   Professional insurance restoration estimates, supplements, and creative marketing solutions—powered by AI.
                 </p>

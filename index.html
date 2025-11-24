@@ -15,11 +15,20 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.3; }
       }
+      @keyframes swoosh {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
       .animate-float {
         animation: float 6s ease-in-out infinite;
       }
       .animate-twinkle {
         animation: twinkle 4s ease-in-out infinite;
+      }
+      .animate-swoosh {
+        background: linear-gradient(90deg, transparent 0%, #3b82f6 50%, transparent 100%);
+        background-size: 200% 100%;
+        animation: swoosh 6s infinite linear;
       }
       .glass-panel {
         background: rgba(255, 255, 255, 0.05);

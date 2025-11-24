@@ -62,7 +62,8 @@ const ClaimSubmission: React.FC = () => {
       if (file) {
         base64 = await fileToBase64(file);
       }
-      const response = await analyzeClaim(fullPrompt, base64);
+      // Pass file type (e.g., 'application/pdf' or 'image/jpeg')
+      const response = await analyzeClaim(fullPrompt, base64, file?.type);
       setResult(response);
     } catch (error) {
       console.error(error);
@@ -179,7 +180,7 @@ const ClaimSubmission: React.FC = () => {
                 <div className="text-center">
                   <Upload className="w-8 h-8 mx-auto mb-2 text-indigo-400/50 group-hover:text-indigo-400 transition-colors" />
                   <p className="text-indigo-200 font-medium">Upload Documentation</p>
-                  <p className="text-indigo-300/50 text-sm mt-1">Insurance scopes, measurements, or denial letters</p>
+                  <p className="text-indigo-300/50 text-sm mt-1">Insurance scopes, measurements, or denial letters (PDF/Image)</p>
                 </div>
               )}
             </label>
