@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Loader2, Send, User, MapPin, Phone, Hammer, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, Send, User, MapPin, Phone, Hammer, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { analyzeClaim } from '../services/geminiService';
 
 const ClaimSubmission: React.FC = () => {
@@ -46,14 +46,14 @@ const ClaimSubmission: React.FC = () => {
     setResult(null);
 
     const fullPrompt = `
-      Restoration Claim Submission:
+      Task / Estimate Inquiry:
       
-      Homeowner Name: ${formData.homeownerName}
+      Client/Homeowner Name: ${formData.homeownerName}
       Property Address: ${formData.propertyAddress}
       Phone Number: ${formData.phoneNumber}
-      Contractor Information: ${formData.contractorInfo}
+      Contractor/Partner Info: ${formData.contractorInfo}
       
-      Claim Details / Description:
+      Task Details / Measurements / Scope:
       ${formData.claimsInfo}
     `;
 
@@ -62,12 +62,11 @@ const ClaimSubmission: React.FC = () => {
       if (file) {
         base64 = await fileToBase64(file);
       }
-      // Pass file type (e.g., 'application/pdf' or 'image/jpeg')
       const response = await analyzeClaim(fullPrompt, base64, file?.type);
       setResult(response);
     } catch (error) {
       console.error(error);
-      setResult("An error occurred while processing your claim.");
+      setResult("An error occurred while processing your inquiry.");
     } finally {
       setLoading(false);
     }
@@ -76,16 +75,19 @@ const ClaimSubmission: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto w-full p-6 animate-float">
       <div className="glass-panel p-8 rounded-2xl shadow-2xl border border-indigo-500/30">
-        <h2 className="text-3xl font-light mb-2 text-center text-indigo-200">Restoration Claim Intake</h2>
-        <p className="text-center text-indigo-100/70 mb-8 max-w-2xl mx-auto">
-          Complete the form below to initiate the estimate process. Submit homeowner details, property info, and upload relevant documentation.
-        </p>
+        <div className="text-center mb-8">
+            <ClipboardCheck className="w-12 h-12 text-indigo-400 mx-auto mb-2" />
+            <h2 className="text-3xl font-light text-indigo-200">Task & Estimate Inquiry</h2>
+            <p className="text-indigo-100/70 max-w-2xl mx-auto mt-2">
+              Submit measurements, insurance scopes, photos, or general tasks. We will analyze the data and prepare your estimate or report.
+            </p>
+        </div>
 
         <div className="space-y-6">
-          {/* Row 1: Homeowner & Phone */}
+          {/* Row 1: Client & Phone */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Homeowner Name</label>
+              <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Client / Homeowner Name</label>
               <div className="relative group">
                 <User className="absolute left-4 top-3.5 w-4 h-4 text-indigo-400/50 group-focus-within:text-indigo-400 transition-colors" />
                 <input
@@ -93,7 +95,7 @@ const ClaimSubmission: React.FC = () => {
                   value={formData.homeownerName}
                   onChange={handleInputChange}
                   className="w-full bg-slate-900/50 border border-indigo-500/30 rounded-xl py-3 pl-10 pr-4 text-indigo-100 placeholder-indigo-300/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                  placeholder="John Doe"
+                  placeholder="Client Name"
                 />
               </div>
             </div>
@@ -130,7 +132,7 @@ const ClaimSubmission: React.FC = () => {
 
           {/* Row 3: Contractor Info */}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Contractor Information</label>
+            <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Your Info / Contractor Info</label>
             <div className="relative group">
               <Hammer className="absolute left-4 top-3.5 w-4 h-4 text-indigo-400/50 group-focus-within:text-indigo-400 transition-colors" />
               <input
@@ -138,20 +140,20 @@ const ClaimSubmission: React.FC = () => {
                 value={formData.contractorInfo}
                 onChange={handleInputChange}
                 className="w-full bg-slate-900/50 border border-indigo-500/30 rounded-xl py-3 pl-10 pr-4 text-indigo-100 placeholder-indigo-300/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="Company Name / Contact Person"
+                placeholder="Your Company Name"
               />
             </div>
           </div>
 
-          {/* Row 4: Claims Info */}
+          {/* Row 4: Task Info */}
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Claims Information</label>
+            <label className="text-xs uppercase tracking-wider text-indigo-200/60 ml-1">Task Details / Measurements</label>
             <div className="relative group">
                 <AlertCircle className="absolute left-4 top-4 w-4 h-4 text-indigo-400/50 group-focus-within:text-indigo-400 transition-colors" />
                 <textarea
                   name="claimsInfo"
                   className="w-full bg-slate-900/50 border border-indigo-500/30 rounded-xl py-3 pl-10 pr-4 text-indigo-100 placeholder-indigo-300/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none h-32"
-                  placeholder="Describe the loss, date of loss, and specific damages..."
+                  placeholder="Paste measurements here, describe damages, or list line items needed..."
                   value={formData.claimsInfo}
                   onChange={handleInputChange}
                 />
@@ -179,8 +181,8 @@ const ClaimSubmission: React.FC = () => {
               ) : (
                 <div className="text-center">
                   <Upload className="w-8 h-8 mx-auto mb-2 text-indigo-400/50 group-hover:text-indigo-400 transition-colors" />
-                  <p className="text-indigo-200 font-medium">Upload Documentation</p>
-                  <p className="text-indigo-300/50 text-sm mt-1">Insurance scopes, measurements, or denial letters (PDF/Image)</p>
+                  <p className="text-indigo-200 font-medium">Upload Documents / Photos</p>
+                  <p className="text-indigo-300/50 text-sm mt-1">PDF Scopes, Sketch Measurements, or Denial Letters</p>
                 </div>
               )}
             </label>
@@ -196,7 +198,7 @@ const ClaimSubmission: React.FC = () => {
             ) : (
               <Send className="w-5 h-5 mr-2" />
             )}
-            Submit Claim for Review
+            Submit Inquiry
           </button>
         </div>
 
@@ -204,7 +206,7 @@ const ClaimSubmission: React.FC = () => {
           <div className="mt-8 p-6 bg-slate-900/60 rounded-xl border border-indigo-500/20 animate-fadeIn">
             <h3 className="text-lg font-medium text-indigo-200 mb-2 flex items-center">
                 <div className="w-2 h-2 bg-indigo-400 rounded-full mr-2 animate-pulse" />
-                Analysis Report
+                Initial Analysis
             </h3>
             <p className="text-indigo-100/80 whitespace-pre-wrap leading-relaxed font-light">{result}</p>
           </div>

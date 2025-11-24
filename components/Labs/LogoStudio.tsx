@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Key, Plus, RefreshCw, Upload, Scaling, Wand2, Loader2, Palette, Download } from 'lucide-react';
 import { generateProGraphics } from '../../services/geminiService';

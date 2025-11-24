@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PenTool, CreditCard, Megaphone, Image, FileText, Type, Palette, Layout, Flag } from 'lucide-react';
 

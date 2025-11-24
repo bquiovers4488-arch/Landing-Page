@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import LabsMenu from './Labs/LabsMenu';
 import LogoStudio from './Labs/LogoStudio';

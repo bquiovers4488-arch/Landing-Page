@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cosmic Healer</title>
+    <title>Estimate Reliance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @keyframes float {
@@ -19,6 +19,10 @@
         0% { background-position: -200% 0; }
         100% { background-position: 200% 0; }
       }
+      @keyframes swoosh-green {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
       .animate-float {
         animation: float 6s ease-in-out infinite;
       }
@@ -29,6 +33,18 @@
         background: linear-gradient(90deg, transparent 0%, #3b82f6 50%, transparent 100%);
         background-size: 200% 100%;
         animation: swoosh 6s infinite linear;
+      }
+      .animate-swoosh-green {
+        background: linear-gradient(90deg, transparent 0%, #10b981 50%, transparent 100%);
+        background-size: 200% 100%;
+        animation: swoosh-green 6s infinite linear;
+      }
+      .radiant-text {
+        color: transparent;
+        background-clip: text;
+        -webkit-background-clip: text;
+        background-image: linear-gradient(to bottom, #ecfdf5, #34d399);
+        text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
       }
       .glass-panel {
         background: rgba(255, 255, 255, 0.05);
