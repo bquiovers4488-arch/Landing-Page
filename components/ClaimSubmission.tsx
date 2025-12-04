@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Loader2, Send, User, MapPin, Phone, Hammer, AlertCircle, ClipboardCheck } from 'lucide-react';
+import { Upload, FileText, Loader2, Send, User, MapPin, Phone, Hammer, AlertCircle, ClipboardCheck, CheckCircle, XCircle } from 'lucide-react';
 import { analyzeClaim } from '../services/geminiService';
+import { sendFormSubmissionEmail } from '../services/emailService';
 
 const ClaimSubmission: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const ClaimSubmission: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [emailMessage, setEmailMessage] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -44,29 +47,59 @@ const ClaimSubmission: React.FC = () => {
     if (!formData.claimsInfo && !file) return;
     setLoading(true);
     setResult(null);
+    setEmailStatus('sending');
+    setEmailMessage('');
 
     const fullPrompt = `
       Task / Estimate Inquiry:
-      
+
       Client/Homeowner Name: ${formData.homeownerName}
       Property Address: ${formData.propertyAddress}
       Phone Number: ${formData.phoneNumber}
       Contractor/Partner Info: ${formData.contractorInfo}
-      
+
       Task Details / Measurements / Scope:
       ${formData.claimsInfo}
     `;
 
+    let base64: string | undefined = undefined;
+
     try {
-      let base64 = undefined;
+      // Convert file to base64 if present
       if (file) {
         base64 = await fileToBase64(file);
       }
+
+      // Send email notification with form data and attachment
+      try {
+        await sendFormSubmissionEmail({
+          homeownerName: formData.homeownerName,
+          propertyAddress: formData.propertyAddress,
+          phoneNumber: formData.phoneNumber,
+          contractorInfo: formData.contractorInfo,
+          claimsInfo: formData.claimsInfo,
+          fileName: file?.name,
+          fileBase64: base64,
+          fileType: file?.type
+        });
+        setEmailStatus('success');
+        setEmailMessage('Your inquiry has been sent successfully!');
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        setEmailStatus('error');
+        setEmailMessage('Email notification failed, but your inquiry is being processed.');
+      }
+
+      // Also run AI analysis
       const response = await analyzeClaim(fullPrompt, base64, file?.type);
       setResult(response);
     } catch (error) {
       console.error(error);
       setResult("An error occurred while processing your inquiry.");
+      if (emailStatus === 'sending') {
+        setEmailStatus('error');
+        setEmailMessage('An error occurred while submitting your inquiry.');
+      }
     } finally {
       setLoading(false);
     }
@@ -200,6 +233,26 @@ const ClaimSubmission: React.FC = () => {
             )}
             Submit Inquiry
           </button>
+
+          {/* Email Status Notification */}
+          {emailStatus !== 'idle' && (
+            <div className={`mt-4 p-4 rounded-xl flex items-center ${
+              emailStatus === 'sending' ? 'bg-blue-500/20 border border-blue-500/30' :
+              emailStatus === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30' :
+              'bg-red-500/20 border border-red-500/30'
+            }`}>
+              {emailStatus === 'sending' && <Loader2 className="w-5 h-5 animate-spin mr-3 text-blue-400" />}
+              {emailStatus === 'success' && <CheckCircle className="w-5 h-5 mr-3 text-emerald-400" />}
+              {emailStatus === 'error' && <XCircle className="w-5 h-5 mr-3 text-red-400" />}
+              <span className={`text-sm ${
+                emailStatus === 'sending' ? 'text-blue-200' :
+                emailStatus === 'success' ? 'text-emerald-200' :
+                'text-red-200'
+              }`}>
+                {emailStatus === 'sending' ? 'Sending your inquiry...' : emailMessage}
+              </span>
+            </div>
+          )}
         </div>
 
         {result && (
