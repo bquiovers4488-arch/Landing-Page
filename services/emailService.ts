@@ -1,16 +1,3 @@
-import emailjs from '@emailjs/browser';
-
-// Initialize EmailJS with your public key
-const initEmailJS = () => {
-  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
-  if (publicKey) {
-    emailjs.init(publicKey);
-  }
-};
-
-// Initialize on module load
-initEmailJS();
-
 interface FormSubmissionData {
   homeownerName: string;
   propertyAddress: string;
@@ -23,98 +10,95 @@ interface FormSubmissionData {
 }
 
 /**
- * Send form submission via email with optional file attachment
- * Uses EmailJS for client-side email sending
+ * Send form submission to n8n webhook
+ * n8n will handle sending the email with attachments
  */
 export const sendFormSubmissionEmail = async (data: FormSubmissionData): Promise<boolean> => {
-  const serviceId = process.env.EMAILJS_SERVICE_ID;
-  const templateId = process.env.EMAILJS_TEMPLATE_ID;
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
 
-  if (!serviceId || !templateId) {
-    console.error('EmailJS configuration missing. Please set EMAILJS_SERVICE_ID and EMAILJS_TEMPLATE_ID');
+  if (!webhookUrl) {
+    console.error('n8n webhook URL not configured. Please set N8N_WEBHOOK_URL in environment variables.');
     throw new Error('Email service not configured');
   }
 
-  // Prepare the template parameters
-  const templateParams: Record<string, string> = {
-    to_email: process.env.RECIPIENT_EMAIL || '',
-    from_name: data.homeownerName || 'Not provided',
-    client_name: data.homeownerName || 'Not provided',
-    property_address: data.propertyAddress || 'Not provided',
-    phone_number: data.phoneNumber || 'Not provided',
-    contractor_info: data.contractorInfo || 'Not provided',
-    task_details: data.claimsInfo || 'Not provided',
-    submission_date: new Date().toLocaleString(),
-    file_attached: data.fileName ? 'Yes' : 'No',
-    file_name: data.fileName || 'None',
+  // Prepare the payload for n8n
+  const payload = {
+    clientName: data.homeownerName || 'Not provided',
+    propertyAddress: data.propertyAddress || 'Not provided',
+    phoneNumber: data.phoneNumber || 'Not provided',
+    contractorInfo: data.contractorInfo || 'Not provided',
+    taskDetails: data.claimsInfo || 'Not provided',
+    submissionDate: new Date().toISOString(),
+    submissionDateFormatted: new Date().toLocaleString(),
+    hasAttachment: !!data.fileName,
+    fileName: data.fileName || null,
+    fileType: data.fileType || null,
+    fileBase64: data.fileBase64 || null,
   };
 
-  // If there's a file attachment, include it as base64
-  // Note: EmailJS has a 50KB limit for attachments in free tier
-  // For larger files, we'll include a note about the file
-  if (data.fileBase64 && data.fileName) {
-    // Check file size (base64 is ~33% larger than original)
-    const approximateSize = (data.fileBase64.length * 3) / 4;
-    const maxSize = 50 * 1024; // 50KB limit for EmailJS free tier
-
-    if (approximateSize <= maxSize) {
-      templateParams.attachment = data.fileBase64;
-      templateParams.attachment_name = data.fileName;
-      templateParams.attachment_type = data.fileType || 'application/octet-stream';
-    } else {
-      // File too large for direct attachment
-      templateParams.file_note = `File "${data.fileName}" (${(approximateSize / 1024).toFixed(1)}KB) was uploaded but exceeds email attachment limit. Please contact submitter for the file.`;
-    }
-  }
-
   try {
-    const response = await emailjs.send(serviceId, templateId, templateParams);
-    console.log('Email sent successfully:', response.status);
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('n8n webhook error:', errorText);
+      throw new Error(`Webhook failed: ${response.status}`);
+    }
+
+    console.log('Form submitted to n8n successfully');
     return true;
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Failed to send to n8n webhook:', error);
     throw error;
   }
 };
 
 /**
- * Alternative: Send form data using a FormData approach (for Formspree/Web3Forms)
- * This is a backup method if EmailJS doesn't work well
+ * Alternative: Send form with file as FormData (multipart)
+ * Use this if you prefer handling files as actual file uploads in n8n
  */
-export const sendFormViaFormspree = async (
-  formspreeUrl: string,
+export const sendFormWithFileUpload = async (
   data: FormSubmissionData,
   file?: File
 ): Promise<boolean> => {
-  const formData = new FormData();
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
 
-  formData.append('Client Name', data.homeownerName);
-  formData.append('Property Address', data.propertyAddress);
-  formData.append('Phone Number', data.phoneNumber);
-  formData.append('Contractor Info', data.contractorInfo);
-  formData.append('Task Details', data.claimsInfo);
-  formData.append('Submission Date', new Date().toLocaleString());
+  if (!webhookUrl) {
+    console.error('n8n webhook URL not configured.');
+    throw new Error('Email service not configured');
+  }
+
+  const formData = new FormData();
+  formData.append('clientName', data.homeownerName || 'Not provided');
+  formData.append('propertyAddress', data.propertyAddress || 'Not provided');
+  formData.append('phoneNumber', data.phoneNumber || 'Not provided');
+  formData.append('contractorInfo', data.contractorInfo || 'Not provided');
+  formData.append('taskDetails', data.claimsInfo || 'Not provided');
+  formData.append('submissionDate', new Date().toISOString());
 
   if (file) {
     formData.append('attachment', file);
   }
 
   try {
-    const response = await fetch(formspreeUrl, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       body: formData,
-      headers: {
-        'Accept': 'application/json'
-      }
     });
 
     if (!response.ok) {
-      throw new Error(`Form submission failed: ${response.status}`);
+      throw new Error(`Webhook failed: ${response.status}`);
     }
 
     return true;
   } catch (error) {
-    console.error('Formspree submission failed:', error);
+    console.error('Failed to send to n8n:', error);
     throw error;
   }
 };

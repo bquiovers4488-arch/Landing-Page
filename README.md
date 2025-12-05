@@ -19,51 +19,66 @@ View your app in AI Studio: https://ai.studio/apps/drive/14o3VAs9CdTy-x9jvHGK_eh
 3. Run the app:
    `npm run dev`
 
-## Email Notifications Setup (EmailJS)
+## Email Notifications Setup (n8n)
 
-To receive form submissions via email, set up EmailJS:
+Form submissions are sent to an n8n webhook which handles email notifications with file attachments.
 
-1. **Create an EmailJS Account:**
-   - Go to [https://www.emailjs.com/](https://www.emailjs.com/) and sign up (free tier: 200 emails/month)
+### n8n Workflow Setup
 
-2. **Set up Email Service:**
-   - In EmailJS dashboard, go to "Email Services"
-   - Click "Add New Service" and connect your email provider (Gmail, Outlook, etc.)
-   - Note down the **Service ID**
+1. **Create an n8n Webhook:**
+   - In n8n, create a new workflow
+   - Add a "Webhook" node as the trigger
+   - Set HTTP Method to `POST`
+   - Copy the webhook URL (Production or Test URL)
 
-3. **Create an Email Template:**
-   - Go to "Email Templates" and click "Create New Template"
-   - Use these template variables in your template:
-     ```
-     Subject: New Task Inquiry from {{client_name}}
-
-     Client Name: {{client_name}}
-     Property Address: {{property_address}}
-     Phone Number: {{phone_number}}
-     Contractor Info: {{contractor_info}}
-
-     Task Details:
-     {{task_details}}
-
-     File Attached: {{file_attached}}
-     File Name: {{file_name}}
-     {{file_note}}
-
-     Submitted: {{submission_date}}
-     ```
-   - Note down the **Template ID**
-
-4. **Get your Public Key:**
-   - Go to "Account" > "API Keys"
-   - Copy your **Public Key**
-
-5. **Add to Environment Variables:**
-   Add these to your `.env.local` file:
+2. **Add to Environment Variables:**
+   Add to your `.env.local` file:
    ```
-   EMAILJS_SERVICE_ID=your_service_id
-   EMAILJS_TEMPLATE_ID=your_template_id
-   EMAILJS_PUBLIC_KEY=your_public_key
-   RECIPIENT_EMAIL=your@email.com
+   N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/xxxxx
    ```
+
+3. **Configure the n8n Workflow:**
+   The webhook receives this JSON payload:
+   ```json
+   {
+     "clientName": "John Doe",
+     "propertyAddress": "123 Main St",
+     "phoneNumber": "(555) 123-4567",
+     "contractorInfo": "ABC Company",
+     "taskDetails": "Task description...",
+     "submissionDate": "2024-01-15T10:30:00.000Z",
+     "submissionDateFormatted": "1/15/2024, 10:30:00 AM",
+     "hasAttachment": true,
+     "fileName": "document.pdf",
+     "fileType": "application/pdf",
+     "fileBase64": "base64-encoded-file-data..."
+   }
+   ```
+
+4. **Example n8n Workflow Nodes:**
+   - **Webhook** (trigger) - Receives form data
+   - **Set** (optional) - Transform/format data
+   - **Send Email** - Configure with your email provider (Gmail, SMTP, etc.)
+     - Use expressions like `{{ $json.clientName }}` in the email body
+     - For attachments: decode base64 and attach file
+
+5. **Handling File Attachments in n8n:**
+   - Add a "Code" node to decode base64:
+     ```javascript
+     if ($json.fileBase64) {
+       return {
+         binary: {
+           attachment: {
+             data: $json.fileBase64,
+             fileName: $json.fileName,
+             mimeType: $json.fileType
+           }
+         },
+         json: $json
+       };
+     }
+     return { json: $json };
+     ```
+   - In the Send Email node, add the binary attachment
 
 6. **Restart the development server** after adding environment variables.
